@@ -1,6 +1,11 @@
 /* script.js */
 
-// --- NUEVO: HISTORIAL DE ESTADOS (UNDO) ---
+// --- NUEVO: VARIABLE PARA GESTIONAR EL RETRASO DEL CLICK ---
+
+let clickTimer = null;
+const CLICK_DELAY = 250; // Milisegundos a esperar para confirmar que no es doble click
+
+// --- HISTORIAL DE ESTADOS (UNDO) ---
 
 let historyStack = [];
 const MAX_HISTORY = 50; // Límite para no saturar memoria
@@ -191,19 +196,28 @@ function syncData() {
 }
 
 function toggleCell(gRow, gCol, r, c) {
-    let id = `cell_${gRow}_${gCol}_${r}_${c}`;
-    let cell = document.getElementById(id);
-    if(!cell) return;
-    
-    // NUEVO: Guardar historia antes del cambio
-    saveHistory();
+    // Si ya había un timer pendiente (clicks muy rápidos), lo limpiamos por seguridad
+    if (clickTimer) clearTimeout(clickTimer);
 
-    let st = 0;
-    if (cell.classList.contains('opt-cross')) st = 1;
-    if (cell.classList.contains('opt-circle')) st = 2;
-    applyState(gRow, gCol, r, c, (st + 1) % 3);
+    // Iniciamos un temporizador. La acción NO se ejecuta inmediatamente.
+    clickTimer = setTimeout(() => {
+        let id = `cell_${gRow}_${gCol}_${r}_${c}`;
+        let cell = document.getElementById(id);
+        if(!cell) return;
+        
+        // --- AQUÍ EMPIEZA LA ACCIÓN DEL CLICK SIMPLE ---
+        saveHistory(); // Guardamos historia justo antes de aplicar cambios
+
+        let st = 0;
+        if (cell.classList.contains('opt-cross')) st = 1;
+        if (cell.classList.contains('opt-circle')) st = 2;
+        applyState(gRow, gCol, r, c, (st + 1) % 3);
+        
+        // Limpiamos el timer al terminar
+        clickTimer = null;
+        
+    }, CLICK_DELAY);
 }
-
 function applyState(gRow, gCol, r, c, state) {
     let id = `cell_${gRow}_${gCol}_${r}_${c}`;
     let cell = document.getElementById(id);
@@ -347,8 +361,15 @@ function resetCell(gr, gc, r, c) {
 }
 
 function cleanZone(gr, gc) {
-    // Esta se llama con doble click en la celda
-    saveHistory(); // NUEVO
+    // --- ESTA ES LA CLAVE ---
+    // Si detectamos un doble click, CANCELAMOS inmediatamente el click simple pendiente
+    if (clickTimer) {
+        clearTimeout(clickTimer);
+        clickTimer = null;
+    }
+
+    // Y ejecutamos la lógica de limpieza
+    saveHistory(); // Guardamos historia
     const max = CONFIG.numItems;
     for(let r=0; r < max; r++) for(let c=0; c < max; c++) force(gr, gc, r, c, 0); 
     updateResultsTable();
