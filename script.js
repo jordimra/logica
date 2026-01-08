@@ -1,6 +1,68 @@
 /* script.js */
 
-// --- NUEVA FUNCIONALIDAD: DESCRIPCIÓN ---
+// --- NUEVO: HISTORIAL DE ESTADOS (UNDO) ---
+
+let historyStack = [];
+const MAX_HISTORY = 50; // Límite para no saturar memoria
+
+function saveHistory() {
+    // Guardamos el estado actual de todas las celdas
+    const currentState = [];
+    const cells = document.querySelectorAll('.cell-option');
+    
+    cells.forEach(cell => {
+        let status = 0;
+        if (cell.classList.contains('opt-cross')) status = 1;
+        if (cell.classList.contains('opt-circle')) status = 2;
+        // Optimizacion: Solo guardamos si tiene algo, para ahorrar espacio, 
+        // pero para restaurar fácil guardamos todo o asumimos 0 por defecto.
+        // Guardaremos id y status.
+        currentState.push({ id: cell.id, s: status });
+    });
+
+    historyStack.push(currentState);
+    if (historyStack.length > MAX_HISTORY) historyStack.shift(); // Eliminar antiguos
+}
+
+function undo() {
+    if (historyStack.length === 0) return; // No hay nada que deshacer
+
+    const previousState = historyStack.pop();
+    
+    // 1. Limpiar todo el tablero visualmente primero
+    const allCells = document.querySelectorAll('.cell-option');
+    allCells.forEach(c => {
+        c.classList.remove('opt-cross', 'opt-circle', 'highlight-warning');
+        c.innerText = "";
+    });
+
+    // 2. Restaurar estado guardado
+    previousState.forEach(item => {
+        const cell = document.getElementById(item.id);
+        if (cell) {
+            if (item.s === 1) cell.classList.add('opt-cross');
+            if (item.s === 2) {
+                cell.classList.add('opt-circle');
+                cell.innerText = ""; // El CSS pone el contenido after, aseguramos limpieza texto
+            }
+        }
+    });
+
+    // 3. Recalcular resultados (sin disparar lógica transitiva, solo leer)
+    updateResultsTable();
+}
+
+// --- Escuchar teclado para CTRL+Z ---
+
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        undo();
+    }
+})
+
+// --- DESCRIPCIÓN ---
+
 function toggleDescription() {
     const container = document.getElementById('description-container');
     const btn = document.getElementById('btn-desc');
@@ -75,19 +137,18 @@ function populateData(data) {
     const max = CONFIG.numItems;
     const maxC = CONFIG.numCats;
     
-    // Rellenar tabla
+    // Limpiamos historial al importar uno nuevo para no mezclar puzles
+    historyStack = []; 
+
     for(let i=0; i < maxC; i++) {
         if(data.cats[i]) document.getElementById(`cat_${i}_name`).value = data.cats[i];
         for(let j=0; j < max; j++) {
             if(data.items[i] && data.items[i][j]) document.getElementById(`item_${i}_${j}`).value = data.items[i][j];
         }
     }
-
-    // Rellenar descripción
     if (data.description !== undefined) {
         document.getElementById('puzzle-description').value = data.description;
     }
-
     syncData(); 
     alert("Importado correctamente.");
 }
@@ -133,6 +194,10 @@ function toggleCell(gRow, gCol, r, c) {
     let id = `cell_${gRow}_${gCol}_${r}_${c}`;
     let cell = document.getElementById(id);
     if(!cell) return;
+    
+    // NUEVO: Guardar historia antes del cambio
+    saveHistory();
+
     let st = 0;
     if (cell.classList.contains('opt-cross')) st = 1;
     if (cell.classList.contains('opt-circle')) st = 2;
@@ -242,6 +307,7 @@ function resetInputs() {
 
 function resetLogic() {
     if(!confirm("¿Limpiar tablero?")) return;
+    saveHistory(); // NUEVO: Guardar antes de borrar
     document.querySelectorAll('.cell-option').forEach(c => {
         c.classList.remove('opt-cross', 'opt-circle', 'highlight-warning');
         c.innerText = "";
@@ -251,8 +317,15 @@ function resetLogic() {
 
 function cleanCategory(idx) {
     if(!confirm("¿Limpiar grupo?")) return;
+    saveHistory(); // NUEVO
     const max = CONFIG.numItems;
     for(let k=0; k < max; k++) cleanLabel(idx, k);
+}
+
+function handleCleanLabel(idx, itemIdx) {
+    // Esta es la que llama el HTML
+    saveHistory();
+    cleanLabel(idx, itemIdx);
 }
 
 function cleanLabel(idx, iIdx) {
@@ -274,6 +347,8 @@ function resetCell(gr, gc, r, c) {
 }
 
 function cleanZone(gr, gc) {
+    // Esta se llama con doble click en la celda
+    saveHistory(); // NUEVO
     const max = CONFIG.numItems;
     for(let r=0; r < max; r++) for(let c=0; c < max; c++) force(gr, gc, r, c, 0); 
     updateResultsTable();

@@ -52,6 +52,7 @@
     <div class="card-section" style="overflow-x: auto; position: relative;">
         <div class="section-header" style="justify-content: space-between;">
             <h2>2. LÓGICA</h2>
+            <button class="btn-gray" onclick="undo()" title="Atajo: Ctrl+Z">↩ Deshacer</button>
             <button class="btn-red" onclick="resetLogic()">🗑️ Limpiar Tablero</button>
         </div>
 
@@ -81,7 +82,7 @@
                         $class = "cell-value cell-label rotated-cell-top thick-bottom";
                         if($isLastItem) $class .= " thick-right";
                         if($idx === 0 && $k === 0) $class .= " thick-left";
-                        echo "<td class='$class' id='th_item_{$g}_{$k}' ondblclick=\"cleanLabel($g, $k)\"><div class='vertical-text-wrapper'>-</div></td>"; 
+                        echo "<td class='$class' id='th_item_{$g}_{$k}' ondblclick=\"handleCleanLabel($g, $k)\"><div class='vertical-text-wrapper'>-</div></td>"; 
                     }
                 }
                 ?>
@@ -102,7 +103,7 @@
                     if($isLastRow) $borderClass .= " thick-bottom";
                     if($rowIndex === 0 && $r === 0) $borderClass .= " thick-top";
 
-                    echo "<td class='$borderClass' id='rh_item_{$gRow}_{$r}' ondblclick=\"cleanLabel($gRow, $r)\">-</td>";
+                    echo "<td class='$borderClass' id='rh_item_{$gRow}_{$r}' ondblclick=\"handleCleanLabel($gRow, $r)\">-</td>";
 
                     $myColGroups = [];
                     if ($mode == '5x5') {
