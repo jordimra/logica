@@ -86,18 +86,48 @@ function markDefect(r, label) {
 }
 
 async function runAll(browser) {
-  await test('T1', 'Inferencia transitiva: triángulo (H2)', async (r) => {
+  await test('T1', 'Inferencia transitiva: triángulo (CHG-1: H2 corregido)', async (r) => {
     const { page, errors, close } = await makePage(browser, BASE + '/index.php');
     await circleCell(page, 'cell_0_1_0_0');
     await circleCell(page, 'cell_0_2_0_0');
     await page.evaluate(() => new Promise((res) => setTimeout(res, 400)));
     const stackErr = errors.some((e) => /Maximum call stack size exceeded/.test(e));
+    const resB = await page.evaluate(() => document.getElementById('res_val_B_0').innerText);
     const resC = await page.evaluate(() => document.getElementById('res_val_C_0').innerText);
     expect(r, 'inferencia: (B,C) r0c0 se marca sola', await cellState(page, 'cell_2_1_0_0'), 'O');
-    expect(r, 'H2: RangeError en consola', stackErr, true);
-    expect(r, 'H2: resultados sin actualizar (res_val_C_0 vacío)', resC, '');
-    markDefect(r, 'H2: recursión infinita applyState→infer→setRel (línea base del defecto)');
+    expect(r, 'sin RangeError en consola', stackErr, false);
+    expect(r, 'resultados actualizados: res_val_B_0', resB, 'B1');
+    expect(r, 'resultados actualizados: res_val_C_0', resC, 'C1');
+    // Nota: línea base anterior (CHG-0, defecto H2): RangeError + res_val_C_0 vacío.
+    // Cambio intencional aprobado por el delta de CHG-1 (evidencia: antes.md).
     await close();
+  });
+
+  await test('T1b', 'Estrellas multi-paso 3x4 y 5x5 (aceptación CHG-1)', async (r) => {
+    const p = await makePage(browser, BASE + '/index.php');
+    await circleCell(p.page, 'cell_0_1_0_0'); // A0=B0
+    await circleCell(p.page, 'cell_0_2_0_0'); // A0=C0
+    await circleCell(p.page, 'cell_0_3_0_0'); // A0=D0
+    await p.page.evaluate(() => new Promise((res) => setTimeout(res, 400)));
+    expect(r, '3x4: (C,B) r0c0 inferido', await cellState(p.page, 'cell_2_1_0_0'), 'O');
+    expect(r, '3x4: (D,B) r0c0 inferido', await cellState(p.page, 'cell_3_1_0_0'), 'O');
+    expect(r, '3x4: (D,C) r0c0 inferido', await cellState(p.page, 'cell_3_2_0_0'), 'O');
+    expect(r, '3x4: sin errores en consola', p.errors.length, 0);
+    expect(r, '3x4: resultado D completado', await p.page.evaluate(() => document.getElementById('res_val_D_0').innerText), 'D1');
+    await p.close();
+    const q = await makePage(browser, BASE + '/index.php?mode=5x5');
+    await circleCell(q.page, 'cell_0_1_0_0'); // A0=B0
+    await circleCell(q.page, 'cell_0_2_0_0'); // A0=C0
+    await circleCell(q.page, 'cell_0_3_0_0'); // A0=D0
+    await circleCell(q.page, 'cell_0_4_0_0'); // A0=E0
+    await q.page.evaluate(() => new Promise((res) => setTimeout(res, 600)));
+    for (const [label, id] of [
+      ['(C,B)', 'cell_2_1_0_0'], ['(D,B)', 'cell_3_1_0_0'], ['(D,C)', 'cell_3_2_0_0'],
+      ['(E,B)', 'cell_4_1_0_0'], ['(E,C)', 'cell_4_2_0_0'], ['(E,D)', 'cell_4_3_0_0']
+    ]) expect(r, '5x5: ' + label + ' r0c0 inferido', await cellState(q.page, id), 'O');
+    expect(r, '5x5: sin errores en consola', q.errors.length, 0);
+    expect(r, '5x5: resultado E completado', await q.page.evaluate(() => document.getElementById('res_val_E_0').innerText), 'E1');
+    await q.close();
   });
 
   await test('T2', 'Ciclo de celdas + clicks rápidos (H3)', async (r) => {

@@ -15,15 +15,19 @@ _Estado: requisito confirmado (README, "Lógica Transitiva Automática") y compo
 
 ### Requirement: La inferencia termina y la tabla de resultados queda siempre actualizada
 El proceso de inferencia SHALL terminar para cualquier secuencia de marcas y, tras cada marca, la tabla RESULTADOS SHALL reflejar el estado final de las celdas.
-_Estado: **REQUISITO CONFIRMADO por D2 (2026-11-17): corrige el defecto H2.** Línea base actual (T1 ejecutado 2026-11-17): recursión sin límite (ciclo `applyState→infer→setRel`) y tabla RESULTADOS no actualizada.
+_Estado: requisito confirmado por D2 (2026-11-17); implementado por CHG-1 (propagación iterativa a punto fijo, `design.md`). La línea base del defecto anterior (H2) queda conservada en la evidencia: `docs/openspec/evidencia/characterization-suite/` (CHG-0) y `fix-inference-recursion/antes.md`._
 
 #### Scenario: Línea base del defecto (comportamiento actual)
-- **WHEN** se ejecuta el triángulo (A,B) r0c0 + (A,C) r0c0 en modo 3x4 sobre el código actual
-- **THEN** se observa: (B,C) r0c0 inferido (círculo), error `RangeError: Maximum call stack size exceeded` en consola, y la celda de resultados de C en la fila 0 permanece vacía
+- **WHEN** (histórico, código pre-CHG-1) se marca el triángulo (A,B) r0c0 + (A,C) r0c0 en modo 3x4
+- **THEN** se observa `(B,C) r0c0` inferido, `RangeError: Maximum call stack size exceeded` en consola y `res_val_C_0` vacío (evidencia conservada: baseline de CHG-0; documento histórico, no comportamiento exigido)
 
 #### Scenario: Comportamiento requerido tras la corrección
-- **WHEN** se ejecuta el triángulo (A,B) r0c0 + (A,C) r0c0 en modo 3x4
-- **THEN** no se produce ningún error, (B,C) r0c0 queda inferido como círculo y la tabla RESULTADOS muestra la equivalencia completa de la fila 0 (B1 y C1)
+- **WHEN** se marca el triángulo (A,B) r0c0 + (A,C) r0c0 en modo 3x4
+- **THEN** no se produce ningún error, (B,C) r0c0 queda inferido como círculo y la tabla RESULTADOS muestra `B1` y `C1` en la fila 0
+
+#### Scenario: Estrella multi-paso en modo 5x5
+- **WHEN** el usuario marca círculo en r0c0 de las zonas (A,B), (A,C), (A,D) y (A,E) (modo 5x5)
+- **THEN** las zonas (B,C), (B,D), (B,E), (C,D), (C,E) y (D,E) quedan inferidas como círculos en r0c0, no se produce ningún error en consola y la tabla RESULTADOS muestra la equivalencia completa de la fila 0
 
 ### Requirement: La inferencia no sobrescribe círculos existentes
 El sistema SHALL no modificar una celda que ya contenga un círculo cuando aplique cruces o inferencias; las celdas con círculo solo cambian de estado por acción explícita del usuario.

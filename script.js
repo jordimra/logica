@@ -212,12 +212,18 @@ function toggleCell(gRow, gCol, r, c) {
         if (cell.classList.contains('opt-cross')) st = 1;
         if (cell.classList.contains('opt-circle')) st = 2;
         applyState(gRow, gCol, r, c, (st + 1) % 3);
+        runInference(); // Drenar la cola de propagación una vez por acción (CHG-1)
         
         // Limpiamos el timer al terminar
         clickTimer = null;
         
     }, CLICK_DELAY);
 }
+// --- PROPAGACIÓN DE INFERENCIA ITERATIVA (CHG-1) ---
+// Cola de celdas recién circuladas pendientes de propagar. Solo se encola una
+// celda al pasar a círculo: la propagación termina (punto fijo) sin recursión.
+let inferQueue = [];
+
 function applyState(gRow, gCol, r, c, state) {
     let id = `cell_${gRow}_${gCol}_${r}_${c}`;
     let cell = document.getElementById(id);
@@ -228,7 +234,7 @@ function applyState(gRow, gCol, r, c, state) {
     else if (state === 2) {
         cell.classList.add('opt-circle');
         autoCross(gRow, gCol, r, c);
-        infer(gRow, r, gCol, c); 
+        inferQueue.push([gRow, r, gCol, c]); // (c1, i1, c2, i2): mismo orden de argumentos que el infer() original
     }
     updateResultsTable();
 }
@@ -247,14 +253,17 @@ function force(gr, gc, r, c, s) {
     if(s === 1) cell.classList.add('opt-cross');
 }
 
-function infer(c1, i1, c2, i2) {
-    const maxC = CONFIG.numCats;
-    for(let c3 = 0; c3 < maxC; c3++) {
-        if(c3 === c1 || c3 === c2) continue;
-        let m3 = findMatch(c1, i1, c3);
-        if(m3 !== -1) setRel(c2, i2, c3, m3);
-        m3 = findMatch(c2, i2, c3);
-        if(m3 !== -1) setRel(c1, i1, c3, m3);
+function runInference() {
+    while (inferQueue.length > 0) {
+        const [c1, i1, c2, i2] = inferQueue.shift();
+        const maxC = CONFIG.numCats;
+        for(let c3 = 0; c3 < maxC; c3++) {
+            if(c3 === c1 || c3 === c2) continue;
+            let m3 = findMatch(c1, i1, c3);
+            if(m3 !== -1) addCircleSafe(c2, i2, c3, m3);
+            m3 = findMatch(c2, i2, c3);
+            if(m3 !== -1) addCircleSafe(c1, i1, c3, m3);
+        }
     }
 }
 
@@ -272,10 +281,13 @@ function findMatch(cs, is, ct) {
     return -1;
 }
 
-function setRel(ca, ia, cb, ib) {
+function addCircleSafe(ca, ia, cb, ib) {
     let co = getCoords(ca, cb);
     if(!co) return;
-    applyState(co.gr, co.gc, co.swapped ? ib : ia, co.swapped ? ia : ib, 2);
+    const r = co.swapped ? ib : ia;
+    const c = co.swapped ? ia : ib;
+    if (isCirc(co.gr, co.gc, r, c)) return; // Ya era círculo: no re-procesar (terminación)
+    applyState(co.gr, co.gc, r, c, 2); // Marca y encola para seguir propagando
 }
 
 function isCirc(gr, gc, r, c) {
