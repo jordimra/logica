@@ -23,7 +23,7 @@ _Estado: comportamiento observado y documentado en README ("Limpieza inteligente
 
 ### Requirement: Demora de 250 ms para desambiguar click simple de doble click
 El sistema SHALL ejecutar la acción de un click simple 250 ms después del click, y SHALL cancelar la acción pendiente si se produce otro click antes de ese plazo.
-_Estado: comportamiento observado (commit `c94ae5c`). Evidencia: `script.js:5-6,198-220`. **Nota:** esto implica que dos clicks rápidos en celdas distintas pierden la primera marca (defecto H3, PD-2). Caracterización: pendiente (T2).
+_Estado: comportamiento observado (commit `c94ae5c`). Evidencia: `script.js:5-6,198-220`. **Nota:** esto implica que dos clicks rápidos en celdas distintas pierden la primera marca (defecto H3; **corrección aprobada por PD-2, 2026-11-17, Fase 4, pendiente en change CHG-4**). Caracterización: pendiente (T2).
 
 #### Scenario: Clicks rápidos en celdas distintas
 - **WHEN** el usuario hace click en celda X y, a menos de 250 ms, click en celda Y

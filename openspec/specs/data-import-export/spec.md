@@ -31,7 +31,7 @@ _Estado: comportamiento observado y documentado en README. Evidencia: `script.js
 
 ### Requirement: Exportación de la plantilla y del progreso
 La exportación a JSON SHALL incluir el estado del tablero (celdas marcadas por zona y posición) además de modo, categorías, ítems y enunciado, de modo que la importación reproduzca plantillas **y progresos**.
-_Estado: **REQUISITO CONFIRMADO por D2 (2026-11-17): corrige el defecto H10** (README: "Guarda tus plantillas o progresos"). Línea base actual (T10 pendiente): el JSON omite el estado del tablero. Esquema del JSON extendido: **decisión pendiente (PD-4)**.
+_Estado: **REQUISITO CONFIRMADO por D2 (2026-11-17): corrige el defecto H10**. Línea base (T10 pendiente): el JSON omite el estado del tablero. Esquema: propuesto en Fase 4 (`flujo-de-trabajo.md` §6), pendiente de ratificación en la P1 de CHG-2.
 
 #### Scenario: Línea base del defecto (comportamiento actual)
 - **WHEN** el usuario marca celdas y exporta a JSON

@@ -35,7 +35,7 @@ _Estado: comportamiento observado. Evidencia: `script.js:145-146`.
 
 ### Requirement: El atajo Ctrl+Z no interfiere con la edición de textos
 El atajo Ctrl+Z para el tablero SHALL respetar el deshacer nativo cuando el foco está dentro de un campo de texto editable.
-_Estado: **REQUISITO PENDIENTE DE DECISIÓN (PD-3).** Comportamiento observado actual (defecto H4): `e.preventDefault()` se aplica sin condicionar al foco, por lo que dentro de los inputs de categorías/ítems Ctrl+Z deshace el tablero en lugar del texto. Evidencia: `script.js:62-67`. No se declara comportamiento aceptado.
+_Estado: **REQUISITO CONFIRMADO (PD-3 aprobado, 2026-11-17; corrección pendiente en CHG-5).** Línea base del defecto H4: `e.preventDefault()` incondicional; en los inputs de texto Ctrl+Z deshace el tablero en lugar del texto. Evidencia: `script.js:62-67`.
 
 #### Scenario: Editando un nombre de categoría (defecto observado)
 - **WHEN** el usuario edita el nombre de una categoría y pulsa Ctrl+Z

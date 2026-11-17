@@ -43,8 +43,24 @@ _Estado: comportamiento observado y documentado en README ("Campos de texto para
 
 ### Requirement: El servidor valida y escapa el parámetro `mode`
 El servidor SHALL validar `mode` contra la lista de modos admitidos y escapar todo valor antes de ecoearlo en la página.
-_Estado: **REQUISITO PENDIENTE DE DECISIÓN (PD-1).** No confirmado hoy: el valor crudo de `$_GET['mode']` se ecoea sin escapar en `<title>` y en el bloque `<script>` (XSS reflejado, R2), confirmado en ejecución 2026-11-17 (V6). Evidencia del defecto: `index.php:7,174`, `logic.php:5`. No se incluye en la línea base de comportamiento aceptado.
+_Estado: **REQUISITO CONFIRMADO (PD-1 aprobado, 2026-11-17; corrección pendiente en CHG-3).** Línea base del defecto: `mode` crudo ecoeado sin escapar en `<title>` y `<script>` (R2, confirmado en ejecución 2026-11-17, V6 y Fase 5). Evidencia: `index.php:7,174`, `logic.php:5`.
 
-#### Scenario: Intento de inyección vía parámetro (defecto observado)
+#### Scenario: Intento de inyección vía parámetro (línea base del defecto)
 - **WHEN** se carga `/index.php?mode=%22%3E%3Cscript%3Ealert(1)%3C%2Fscript%3E`
-- **THEN** hoy el payload se refleja sin escapar en el `<title>` (comportamiento observado, defecto R2); tras la decisión PD-1 y su corrección, el valor se normaliza a un modo válido o se escapa y el payload no se ejecuta
+- **THEN** el payload se refleja sin escapar en el `<title>` (comportamiento observado actual, defecto R2)
+
+#### Scenario: Comportamiento requerido tras la corrección (CHG-3)
+- **WHEN** se carga `/index.php?mode=%22%3E%3Cscript%3Ealert(1)%3C%2Fscript%3E` o cualquier valor no admitido
+- **THEN** el servidor normaliza el valor a un modo válido (o lo trata como `3x4`) y el payload nunca se ecoea sin escapar; no se ejecuta JavaScript inyectado
+
+### Requirement: Confirmación antes de recargar al cambiar de modo
+Al cambiar el modo desde el selector, el sistema SHALL solicitar confirmación al usuario antes de recargar la página; si el usuario la cancela, la página SHALL mantener el modo y el estado actuales.
+_Estado: **REQUISITO CONFIRMADO (IC-1 aprobado, 2026-11-17; corrección pendiente en CHG-6).** Línea base del defecto (R5): el selector recarga de inmediato y el trabajo no exportado se pierde sin aviso. Evidencia: `index.php:16-23`. Caracterización: pendiente (T9).
+
+#### Scenario: Línea base del defecto (comportamiento actual)
+- **WHEN** el usuario tiene marcas y textos sin exportar y cambia el modo desde el selector
+- **THEN** la página recarga de inmediato en el nuevo modo y el trabajo no exportado se pierde
+
+#### Scenario: Comportamiento requerido tras la corrección (CHG-6)
+- **WHEN** el usuario cambia el modo y cancela la confirmación
+- **THEN** la página no recarga, el modo y el estado del tablero permanecen intactos

@@ -9,6 +9,16 @@ context: |
   - Tests de caracterización: `tests/characterization/` (Node + Playwright contra el servidor PHP). Los fixtures van en `tests/fixtures/`.
   - No modificar el código de producto para facilitar la caracterización; los tests observan el comportamiento tal cual.
 
+operations:
+  apply:
+    guidance:
+      - Antes de tocar código de producto, ejecutar los tests de caracterización pertinentes (línea base) y guardar evidencia en docs/openspec/evidencia/<change>/.
+      - Marcar cada tarea con [ ] pendiente, [x] completado con evidencia, [!] problema; no implementar fuera del alcance aprobado.
+  archive:
+    guidance:
+      - Archivar solo con aprobación explícita del usuario, tareas en [x] y verificación satisfactoria.
+      - Resumen del resultado del archive (deltas aplicados, tests antes/después) antes de terminar.
+
 rules:
   proposal:
     - Un cambio por change; indicar superficie afectada (index.php, logic.php, script.js, styles.css).
