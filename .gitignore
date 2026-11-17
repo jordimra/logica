@@ -1,0 +1,12 @@
+# Skills y cachés de agentes
+.agents/
+
+# Editores y SO
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+

@@ -1,0 +1,51 @@
+schema: spec-driven
+
+context: |
+  Aplicación web sin dependencias ni base de datos para crear y resolver puzles lógicos (Zebra puzzles).
+  - Stack: PHP 8.4 (solo plantilla: index.php/logic.php) + script.js (toda la lógica de negocio, en el navegador) + styles.css.
+  - Servidor local: `php -S localhost:8000` desde la raíz del proyecto (PHP 8.4 NTS instalado vía winget).
+  - Restricción de diseño: no añadir dependencias externas ni base de datos.
+  - Los artefactos de OpenSpec se redactan en español.
+  - Tests de caracterización: `tests/characterization/` (Node + Playwright contra el servidor PHP). Los fixtures van en `tests/fixtures/`.
+  - No modificar el código de producto para facilitar la caracterización; los tests observan el comportamiento tal cual.
+
+rules:
+  proposal:
+    - Un cambio por change; indicar superficie afectada (index.php, logic.php, script.js, styles.css).
+    - Distinguir explícitamente comportamiento observado (con evidencia) de requisito nuevo.
+    - Señalar si el change corrige un defecto documentado en docs/openspec/diagnostico-inicial.md (H#).
+  tasks:
+    - Incluir siempre la ejecución de tests de caracterización ANTES y DESPUÉS del cambio, con evidencia del resultado.
+  specs:
+    - Escribir escenarios en español usando "CUANDO/ENTONCES" (WHEN/THEN).
+
+# Project context (optional)
+# Add only constraints that should guide OpenSpec artifacts and workflows.
+# Include constraints an agent cannot infer by reading the code.
+# Keep general project documentation and discoverable codebase facts out.
+# Example:
+#   context: |
+#     Designs and tasks must cover Windows, macOS, and Linux
+#     Write all artifacts in Spanish
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
