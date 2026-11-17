@@ -216,6 +216,19 @@ function populateData(data) {
 
 function capitalize(s) { return s && s[0].toUpperCase() + s.slice(1); }
 
+// CHG-6/IC-1: confirmación antes de recargar al cambiar de modo.
+// Al cancelar, el selector vuelve al modo actual (sin recarga); asignar .value
+// no dispara otro cambio.
+function confirmModeChange(sel) {
+    const next = sel.value;
+    if (next === CONFIG.mode) return; // Sin cambio
+    if (confirm(`¿Cambiar al modo ${next}? Se perderá el progreso no exportado.`)) {
+        sel.form.submit();
+    } else {
+        sel.value = CONFIG.mode;
+    }
+}
+
 function syncData() {
     const cats = []; const items = [];
     const max = CONFIG.numItems;

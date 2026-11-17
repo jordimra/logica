@@ -14,7 +14,7 @@
             <div class="header-controls">
                 <h2>1. INTRODUCCIÓN</h2>
                 <form method="GET" style="margin:0;">
-                    <select name="mode" class="mode-selector" onchange="this.form.submit()">
+                    <select name="mode" class="mode-selector" onchange="confirmModeChange(this)">
                         <option value="3x4" <?php echo $mode=='3x4'?'selected':''; ?>>3x4 (Original)</option>
                         <option value="4x4" <?php echo $mode=='4x4'?'selected':''; ?>>4x4 (Más ítems)</option>
                         <option value="5x4" <?php echo $mode=='5x4'?'selected':''; ?>>5x4 (5 ítems)</option>

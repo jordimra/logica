@@ -331,17 +331,35 @@ async function runAll(browser) {
     // Cambio intencional aprobado por el delta de CHG-3 (evidencia: antes.md).
   });
 
-  await test('T9', 'Cambio de modo: pérdida de estado sin aviso (R5)', async (r) => {
+  await test('T9', 'Cambio de modo: confirmación previa (CHG-6: R5 corregido)', async (r) => {
     const p = await makePage(browser, BASE + '/index.php');
     await circleCell(p.page, 'cell_0_1_0_0');
     expect(r, 'estado previo: círculo', await cellState(p.page, 'cell_0_1_0_0'), 'O');
-    await p.page.selectOption('.mode-selector', '4x4');
+    // (a) Cancelar: se pide confirmación; modo y estado permanecen (sin recarga)
+    await p.page.evaluate(() => { window.__diag.confirmResults = false; });
+    const c0 = await p.page.evaluate(() => window.__diag.confirms);
+    await p.page.evaluate(() => {
+      const sel = document.querySelector('.mode-selector');
+      sel.value = '4x4';
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await sleep(400);
+    expect(r, 'se pidió confirmación', await p.page.evaluate((c) => window.__diag.confirms, c0), c0 + 1);
+    expect(r, 'al cancelar: modo sigue siendo 3x4', await p.page.evaluate(() => document.querySelector('.mode-selector').value), '3x4');
+    expect(r, 'al cancelar: la marca se conserva', await cellState(p.page, 'cell_0_1_0_0'), 'O');
+    // (b) Confirmar: recarga al nuevo modo (el progreso no exportado se pierde, aceptado)
+    await p.page.evaluate(() => { window.__diag.confirmResults = true; });
+    await p.page.evaluate(() => {
+      const sel = document.querySelector('.mode-selector');
+      sel.value = '4x4';
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     await p.page.waitForLoadState('load');
     await sleep(400);
-    const mode = await p.page.evaluate(() => document.querySelector('.mode-selector').value);
-    expect(r, 'modo cambiado a 4x4', mode, '4x4');
-    expect(r, 'R5: marcas no exportadas perdidas', await cellState(p.page, 'cell_0_1_0_0'), '-');
-    markDefect(r, 'R5: recarga inmediata sin confirmación (línea base)');
+    expect(r, 'al confirmar: modo cambiado a 4x4', await p.page.evaluate(() => document.querySelector('.mode-selector').value), '4x4');
+    expect(r, 'al confirmar: la marca no exportada se pierde (aceptado)', await cellState(p.page, 'cell_0_1_0_0'), '-');
+    // Nota: línea base anterior (CHG-0, defecto R5): recarga inmediata sin confirmación.
+    // Cambio intencional aprobado por el delta de CHG-6 (evidencia: antes.md).
     await p.close();
   });
 
