@@ -2,6 +2,9 @@
 .agents/
 .playwright-mcp/
 
+# Herramientas de test (solo desarrollo)
+node_modules/
+
 # Editores y SO
 .vscode/
 .idea/

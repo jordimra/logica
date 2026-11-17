@@ -1,0 +1,13 @@
+{
+  "name": "logica-tests",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Suite de caracterización (dev-only; la app no tiene dependencias)",
+  "type": "module",
+  "scripts": {
+    "test:characterization": "node tests/characterization/run.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.58.0"
+  }
+}

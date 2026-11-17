@@ -1,0 +1,12 @@
+{
+  "mode": "5x5",
+  "cats": ["Ciudades", "Ríos", "Montes", "Lagos", "Islas"],
+  "items": [
+    ["roma", "paris", "tokio", "cairo", "lima"],
+    ["nilo", "rino", "ames", "sena", "dnieper"],
+    ["everest", "alps", "andes", "urals", "rockies"],
+    ["baikal", "titicaca", "chad", "superior", "victoria"],
+    ["cuba", "jamaica", "ceylon", "madagascar", "hawa"]
+  ],
+  "description": "Puzle experto con variable E."
+}

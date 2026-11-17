@@ -1,0 +1,11 @@
+{
+  "mode": "3x4",
+  "cats": ["Colores", "Frutas", "Vehículos", "Países"],
+  "items": [
+    ["rojo", "verde", "azul"],
+    ["pera", "manzana", "kiwi"],
+    ["coche", "bus", "tren"],
+    ["francia", "italia", "españa"]
+  ],
+  "description": "Pista 1: el color rojo no va con la pera."
+}
