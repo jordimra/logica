@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Puzle Lógico - <?php echo $mode; ?></title>
+    <title>Generador de Puzle Lógico - <?php echo htmlspecialchars($mode, ENT_QUOTES, 'UTF-8'); ?></title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -171,7 +171,7 @@
         const CONFIG = {
             numCats: <?php echo $numCats; ?>,
             numItems: <?php echo $numItems; ?>,
-            mode: '<?php echo $mode; ?>',
+            mode: '<?php echo htmlspecialchars($mode, ENT_QUOTES, 'UTF-8'); ?>',
             catNames: <?php echo json_encode(array_slice($catNames, 0, $numCats)); ?>
         };
     </script>

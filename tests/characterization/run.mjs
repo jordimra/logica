@@ -231,10 +231,22 @@ async function runAll(browser) {
     await p.close();
   });
 
-  await test('T8', 'XSS vía parámetro mode (R2)', async (r) => {
+  await test('T8', 'Parámetro mode: whitelist + escape (CHG-3: R2 corregido)', async (r) => {
+    // 1) El payload no debe reflejarse en ningún sitio del HTML
     const html = await (await fetch(BASE + '/index.php?mode=%22%3E%3Cscript%3Ealert(1)%3C%2Fscript%3E')).text();
-    expect(r, 'payload reflejado sin escapar en <title>', html.includes('"><script>alert(1)</script>'), true);
-    markDefect(r, 'R2: XSS reflejado (línea base del defecto)');
+    expect(r, 'payload no reflejado en el HTML', html.includes('"><script>alert(1)</script>'), false);
+    // 2) La página carga con el modo normalizado a 3x4 (cubre el literal JS CONFIG.mode)
+    const p = await makePage(browser, BASE + '/index.php?mode=%22%3E%3Cscript%3Ealert(1)%3C%2Fscript%3E');
+    expect(r, 'CONFIG.mode normalizado a 3x4', await p.page.evaluate(() => CONFIG.mode), '3x4');
+    expect(r, 'tablero 3x4 renderizado', await p.page.evaluate(() => !!document.getElementById('cell_0_1_0_0')), true);
+    expect(r, 'sin errores en consola', p.errors.length, 0);
+    // 3) Modo inválido simple normalizado al por defecto
+    const q = await makePage(browser, BASE + '/index.php?mode=modo-inexistente');
+    expect(r, 'modo inválido normalizado a 3x4', await q.page.evaluate(() => CONFIG.mode), '3x4');
+    await q.close();
+    await p.close();
+    // Nota: línea base anterior (CHG-0, defecto R2): el payload se reflejaba crudo en <title>.
+    // Cambio intencional aprobado por el delta de CHG-3 (evidencia: antes.md).
   });
 
   await test('T9', 'Cambio de modo: pérdida de estado sin aviso (R5)', async (r) => {

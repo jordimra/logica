@@ -42,16 +42,24 @@ _Estado: comportamiento observado y documentado en README ("Campos de texto para
 - **THEN** la tabla INTRODUCCIÓN muestra categorías A–D e ítems `a1..a3`, `b1..b3`, `c1..c3`, `d1..d3`
 
 ### Requirement: El servidor valida y escapa el parámetro `mode`
-El servidor SHALL validar `mode` contra la lista de modos admitidos y escapar todo valor antes de ecoearlo en la página.
-_Estado: **REQUISITO CONFIRMADO (PD-1 aprobado, 2026-11-17; corrección pendiente en CHG-3).** Línea base del defecto: `mode` crudo ecoeado sin escapar en `<title>` y `<script>` (R2, confirmado en ejecución 2026-11-17, V6 y Fase 5). Evidencia: `index.php:7,174`, `logic.php:5`.
+El servidor SHALL validar `mode` contra la lista de modos admitidos (`3x4`, `4x4`, `5x4`, `5x5`) y normalizar cualquier otro valor (incluido vacío o de tipo no esperado) al modo por defecto `3x4`, y SHALL escapar los valores antes de ecoearlos en la página; como consecuencia, ningún valor externo SHALL reflejarse sin escapar en el título, el selector ni el literal de configuración JS.
+_Estado: requisito confirmado por PD-1 (2026-11-17); implementado por CHG-3 (whitelist en `logic.php` + escape en `index.php`, ver `design.md`). La línea base del defecto anterior (R2) queda conservada como evidencia en `docs/openspec/evidencia/sanitize-mode-param/antes.md` y en la suite de caracterización (CHG-0)._
 
 #### Scenario: Intento de inyección vía parámetro (línea base del defecto)
-- **WHEN** se carga `/index.php?mode=%22%3E%3Cscript%3Ealert(1)%3C%2Fscript%3E`
-- **THEN** el payload se refleja sin escapar en el `<title>` (comportamiento observado actual, defecto R2)
+- **WHEN** (histórico, código pre-CHG-3) se carga `/index.php?mode=%22%3E%3Cscript%3Ealert(1)%3C%2Fscript%3E`
+- **THEN** el payload se refleja sin escapar en el `<title>` (documento histórico, no comportamiento exigido; evidencia conservada: baseline de CHG-0 y `antes.md`, test T8)
 
 #### Scenario: Comportamiento requerido tras la corrección (CHG-3)
 - **WHEN** se carga `/index.php?mode=%22%3E%3Cscript%3Ealert(1)%3C%2Fscript%3E` o cualquier valor no admitido
-- **THEN** el servidor normaliza el valor a un modo válido (o lo trata como `3x4`) y el payload nunca se ecoea sin escapar; no se ejecuta JavaScript inyectado
+- **THEN** el servidor normaliza el valor a `3x4`, el payload no aparece en la página (título, selector ni literal de configuración JS) y la aplicación se carga sin errores de consola
+
+#### Scenario: Modo inválido simple normalizado al por defecto
+- **WHEN** se carga `/index.php?mode=modo-inexistente`
+- **THEN** la página renderiza la cuadrícula `3x4`, el selector marca `3x4 (Original)` y el modo de configuración (`CONFIG.mode`) es `3x4`
+
+#### Scenario: Modo válido no alterado por la validación
+- **WHEN** se carga `/index.php?mode=4x4`
+- **THEN** el modo de configuración (`CONFIG.mode`) es `4x4` y la página renderiza 4 categorías × 4 ítems, sin errores de consola
 
 ### Requirement: Confirmación antes de recargar al cambiar de modo
 Al cambiar el modo desde el selector, el sistema SHALL solicitar confirmación al usuario antes de recargar la página; si el usuario la cancela, la página SHALL mantener el modo y el estado actuales.

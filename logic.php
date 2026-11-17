@@ -4,6 +4,13 @@
 // Detectar configuración desde el selector (GET)
 $mode = $_GET['mode'] ?? '3x4';
 
+// Validación (CHG-3): whitelist de modos admitidos; cualquier otro valor (incluido vacío
+// o ?mode[]=...) se normaliza a 3x4. Al normalizar en la fuente, todos los ecos reciben
+// solo literales seguros (defensa en profundidad con el escape de index.php).
+if (!in_array($mode, ['3x4', '4x4', '5x4', '5x5'], true)) {
+    $mode = '3x4';
+}
+
 // Valores por defecto
 $numCats = 4;
 $numItems = 3;
