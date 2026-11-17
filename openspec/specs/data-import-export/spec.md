@@ -31,15 +31,23 @@ _Estado: comportamiento observado y documentado en README. Evidencia: `script.js
 
 ### Requirement: Exportación de la plantilla y del progreso
 La exportación a JSON SHALL incluir el estado del tablero (celdas marcadas por zona y posición) además de modo, categorías, ítems y enunciado, de modo que la importación reproduzca plantillas **y progresos**.
-_Estado: **REQUISITO CONFIRMADO por D2 (2026-11-17): corrige el defecto H10**. Línea base (T10 pendiente): el JSON omite el estado del tablero. Esquema: propuesto en Fase 4 (`flujo-de-trabajo.md` §6), pendiente de ratificación en la P1 de CHG-2.
+_Estado: requisito confirmado por D2 (2026-11-17); implementado por CHG-2 (esquema v2 aprobado por PD-4, `design.md`). La línea base del defecto anterior (H10) queda conservada como evidencia en `docs/openspec/evidencia/export-progress-json/antes.md` y en la suite de caracterización (CHG-0)._
 
 #### Scenario: Línea base del defecto (comportamiento actual)
-- **WHEN** el usuario marca celdas y exporta a JSON
-- **THEN** el archivo `puzle_<modo>.json` contiene modo, categorías, ítems y descripción, pero ninguna información de las celdas marcadas
+- **WHEN** (histórico, código pre-CHG-2) el usuario marca celdas y exporta
+- **THEN** el JSON contiene modo, categorías, ítems y descripción, pero ninguna información de las celdas marcadas (evidencia conservada: baseline de CHG-0, test T10)
 
 #### Scenario: Comportamiento requerido tras la corrección
 - **WHEN** el usuario marca celdas, exporta y luego importa el archivo en una sesión nueva
-- **THEN** el tablero se restaura con las mismas marcas (❌/🔵) y la tabla de resultados se calcula sobre ellas
+- **THEN** el tablero se restaura con las mismas marcas (❌/🔵) y la tabla de resultados se calcula sobre ellas, sin errores
+
+#### Scenario: Exportación versión 2 (esquema)
+- **WHEN** el usuario exporta con marcas en el tablero
+- **THEN** el JSON incluye `version: 2` y un objeto `board` que asocia cada zona marcada (clave `<gr>_<gc>`) a sus celdas marcadas (clave `<r>_<c>`) con valor `1` (❌) o `2` (🔵), omitiendo celdas vacías
+
+#### Scenario: Importación de archivo v1 (sin versión ni board)
+- **WHEN** el usuario importa un JSON anterior a la versión 2 (sin `version` ni `board`)
+- **THEN** se pueblan categorías, ítems y descripción exactamente como antes, sin marcas y sin errores
 
 ### Requirement: Importación de un JSON del mismo modo
 Al importar un JSON cuyo modo coincide con el actual, el sistema SHALL poblar categorías, ítems y enunciado, vaciar el historial y notificar al usuario.

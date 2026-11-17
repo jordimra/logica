@@ -4,6 +4,7 @@
 
 # Herramientas de test (solo desarrollo)
 node_modules/
+tests/fixtures/roundtrip-*.json
 
 # Editores y SO
 .vscode/

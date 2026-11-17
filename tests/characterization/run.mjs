@@ -251,7 +251,7 @@ async function runAll(browser) {
     await p.close();
   });
 
-  await test('T10', 'Export JSON: sin estado del tablero (H10)', async (r) => {
+  await test('T10', 'Export JSON con board (CHG-2: H10 corregido)', async (r) => {
     const p = await makePage(browser, BASE + '/index.php');
     await circleCell(p.page, 'cell_0_1_0_0');
     await p.page.evaluate(() => { document.getElementById('cat_0_name').value = 'Alpha'; });
@@ -263,12 +263,43 @@ async function runAll(browser) {
     });
     const data = JSON.parse(txt);
     expect(r, 'modo exportado', data.mode, '3x4');
+    expect(r, 'versión 2', data.version, 2);
     expect(r, 'categoría editada exportada', data.cats[0], 'Alpha');
     expect(r, 'ítems exportados (4 categorías)', data.items.length, 4);
-    expect(r, 'H10: el JSON NO incluye el estado del tablero',
-      'board' in data || 'cells' in data || 'state' in data, false);
-    markDefect(r, 'H10: el progreso ❌/🔵 no se exporta (línea base)');
+    expect(r, 'board: círculo (A,B) r0c0', data.board && data.board['0_1'] && data.board['0_1']['0_0'], 2);
+    expect(r, 'board: autocruce (A,B) r0c1', data.board && data.board['0_1']['0_1'], 1);
+    expect(r, 'board: autocruce (A,B) r1c0', data.board && data.board['0_1']['1_0'], 1);
+    expect(r, 'board: celda sin marca omitida', data.board && data.board['0_1']['1_1'], undefined);
+    // Nota: línea base anterior (CHG-0, defecto H10): el JSON no llevaba estado.
+    // Cambio intencional aprobado por el delta de CHG-2 (evidencia: antes.md).
     await p.close();
+  });
+
+  await test('T11', 'Round-trip export/import del progreso (aceptación CHG-2)', async (r) => {
+    const p = await makePage(browser, BASE + '/index.php');
+    await circleCell(p.page, 'cell_0_1_0_0'); // (A,B) r0c0
+    await circleCell(p.page, 'cell_0_2_0_0'); // (A,C) r0c0 → infiere (B,C)
+    await p.page.evaluate(() => new Promise((res) => setTimeout(res, 400)));
+    await p.page.evaluate(() => exportData());
+    await sleep(400);
+    const txt = await p.page.evaluate(async () => {
+      const b = window.__diag.exportBlobs[0];
+      return b ? await b.text() : null;
+    });
+    await p.close();
+    const rtFile = FIX('roundtrip-3x4.json'); // fixture temporal generado (ignorado en git)
+    fs.writeFileSync(rtFile, txt, 'utf8');
+    const q = await makePage(browser, BASE + '/index.php');
+    await q.page.setInputFiles('#importFile', rtFile);
+    await sleep(400);
+    expect(r, 'círculo (A,B) r0c0 restaurado', await cellState(q.page, 'cell_0_1_0_0'), 'O');
+    expect(r, 'autocruce (A,B) r0c1 restaurado', await cellState(q.page, 'cell_0_1_0_1'), 'X');
+    expect(r, 'círculo inferido (B,C) r0c0 restaurado', await cellState(q.page, 'cell_2_1_0_0'), 'O');
+    expect(r, 'resultado B calculado', await q.page.evaluate(() => document.getElementById('res_val_B_0').innerText), 'B1');
+    expect(r, 'resultado C calculado', await q.page.evaluate(() => document.getElementById('res_val_C_0').innerText), 'C1');
+    expect(r, 'sin errores en consola', q.errors.length, 0);
+    expect(r, 'alerta de éxito', await q.page.evaluate(() => window.__diag.alerts.includes('Importado correctamente.')), true);
+    await q.close();
   });
 }
 

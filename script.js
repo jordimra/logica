@@ -103,11 +103,27 @@ function exportData() {
     // Obtener descripción
     const description = document.getElementById('puzzle-description').value;
 
+    // Estado del tablero (CHG-2): solo celdas marcadas; 1=❌, 2=🔵
+    const board = {};
+    document.querySelectorAll('.cell-option').forEach(cell => {
+        let s = 0;
+        if (cell.classList.contains('opt-cross')) s = 1;
+        if (cell.classList.contains('opt-circle')) s = 2;
+        if (s === 0) return;
+        const m = cell.id.match(/^cell_(\d)_(\d)_(\d)_(\d)$/);
+        if (!m) return;
+        const zk = m[1] + '_' + m[2], ck = m[3] + '_' + m[4];
+        if (!board[zk]) board[zk] = {};
+        board[zk][ck] = s;
+    });
+
     const data = { 
+        version: 2,
         mode: CONFIG.mode, 
         cats: cats, 
         items: items,
-        description: description // Guardamos descripción
+        description: description, // Guardamos descripción
+        board: board // Progreso del tablero (CHG-2)
     };
 
     const jsonStr = JSON.stringify(data, null, 2);
@@ -153,6 +169,30 @@ function populateData(data) {
     }
     if (data.description !== undefined) {
         document.getElementById('puzzle-description').value = data.description;
+    }
+    // Restaurar tablero (CHG-2): solo v2 y modo coincidente; clases directas
+    // (sin autocruce ni inferencia): restauración fiel + resultados recalculados
+    if (data.board && data.mode === CONFIG.mode) {
+        document.querySelectorAll('.cell-option').forEach(c => {
+            c.classList.remove('opt-cross', 'opt-circle', 'highlight-warning');
+            c.innerText = "";
+        });
+        for (const zk of Object.keys(data.board)) {
+            const zm = zk.match(/^(\d)_(\d)$/);
+            if (!zm) continue;
+            const gr = +zm[1], gc = +zm[2];
+            for (const ck of Object.keys(data.board[zk])) {
+                const cm = ck.match(/^(\d)_(\d)$/);
+                if (!cm) continue;
+                const r = +cm[1], c = +cm[2];
+                if (r >= max || c >= max) continue;
+                const el = document.getElementById(`cell_${gr}_${gc}_${r}_${c}`);
+                if (!el) continue; // Zona inexistente en este modo: ignorar
+                const s = data.board[zk][ck];
+                if (s === 1) el.classList.add('opt-cross');
+                else if (s === 2) el.classList.add('opt-circle');
+            }
+        }
     }
     syncData(); 
     alert("Importado correctamente.");
