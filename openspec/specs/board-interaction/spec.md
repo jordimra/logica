@@ -22,8 +22,8 @@ _Estado: comportamiento observado y documentado en README ("Limpieza inteligente
 - **THEN** las celdas (A,B) r0c1, r0c2, r1c0 y r2c0 quedan marcadas con cruz, y el resto del tablero permanece inalterado
 
 ### Requirement: Demora de 250 ms para desambiguar click simple de doble click
-El sistema SHALL ejecutar la acción de un click simple 250 ms después del click, manteniendo las acciones pendientes en una cola por celda: un click sobre una celda distinta SHALL no cancelar las acciones pendientes de otras celdas, un nuevo click sobre la misma celda SHALL reemplazar su acción pendiente (último click gana), y un doble click sobre una zona SHALL cancelar únicamente las acciones pendientes de esa zona.
-_Estado: comportamiento corregido por CHG-4 (PD-2 aprobado, 2026-11-17: "pila de acciones en cola en lugar de cancelación"; ver `design.md`). La línea base del defecto anterior (H3: cancelación global por `clickTimer` único) queda conservada como evidencia en `docs/openspec/evidencia/fast-click-retention/antes.md` y en la suite de caracterización (CHG-0)._
+El sistema SHALL ejecutar la acción de un click simple 250 ms después del click, con las acciones pendientes en cola por celda: un click en una celda distinta no cancela las de otras celdas, un nuevo click en la misma celda reemplaza su acción pendiente, y un doble click en una zona cancela solo las acciones pendientes de esa zona.
+_Estado: corregido por CHG-4 (PD-2). Evidencia: `docs/openspec/evidencia/fast-click-retention/`._
 
 #### Scenario: Clicks rápidos en celdas distintas
 - **WHEN** el usuario hace click en celda X y, a menos de 250 ms, click en celda Y
@@ -43,8 +43,8 @@ _Estado: cambio intencional — en la línea base (defecto H3) la acción de X s
 - **THEN** la acción pendiente de Z1 se ejecuta igualmente (la cancelación del doble click solo afecta a su propia zona)
 
 ### Requirement: Limpieza de una zona con doble click
-Un doble click sobre una zona del tablero SHALL solicitar confirmación antes de vaciar las celdas con cruz de esa zona y cancelar cualquier click simple pendiente sobre ella. Los círculos existentes de la zona NO se modifican por la limpieza (la primitiva de limpieza no toca celdas con círculo — comportamiento observado y conservado). Si el usuario cancela, la zona no se modifica.
-_Estado: corrección CHG-5 (PD-3: confirmaciones coherentes; ver `design.md`). La línea base anterior (doble click sin confirmación) queda conservada en `docs/openspec/evidencia/undo-and-confirm-coherence/antes.md`._
+Un doble click sobre una zona del tablero SHALL solicitar confirmación antes de vaciar las celdas con cruz de esa zona y cancelar cualquier click simple pendiente sobre ella; los círculos existentes NO se modifican por la limpieza, y si el usuario cancela, la zona no se modifica.
+_Estado: confirmación añadida por CHG-5 (PD-3). Evidencia: `docs/openspec/evidencia/undo-and-confirm-coherence/`._
 
 #### Scenario: Doble click en una zona
 - **WHEN** el usuario hace doble click sobre la zona (A,B) que contiene cruces y confirma la limpieza

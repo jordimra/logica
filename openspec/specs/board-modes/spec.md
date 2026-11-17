@@ -42,8 +42,8 @@ _Estado: comportamiento observado y documentado en README ("Campos de texto para
 - **THEN** la tabla INTRODUCCIÓN muestra categorías A–D e ítems `a1..a3`, `b1..b3`, `c1..c3`, `d1..d3`
 
 ### Requirement: El servidor valida y escapa el parámetro `mode`
-El servidor SHALL validar `mode` contra la lista de modos admitidos (`3x4`, `4x4`, `5x4`, `5x5`) y normalizar cualquier otro valor (incluido vacío o de tipo no esperado) al modo por defecto `3x4`, y SHALL escapar los valores antes de ecoearlos en la página; como consecuencia, ningún valor externo SHALL reflejarse sin escapar en el título, el selector ni el literal de configuración JS.
-_Estado: requisito confirmado por PD-1 (2026-11-17); implementado por CHG-3 (whitelist en `logic.php` + escape en `index.php`, ver `design.md`). La línea base del defecto anterior (R2) queda conservada como evidencia en `docs/openspec/evidencia/sanitize-mode-param/antes.md` y en la suite de caracterización (CHG-0)._
+El servidor SHALL validar `mode` contra la lista de modos admitidos (`3x4`, `4x4`, `5x4`, `5x5`) y normalizar cualquier otro valor al modo por defecto `3x4`, y SHALL escapar los valores antes de ecoearlos en la página (título, selector y literal de configuración JS).
+_Estado: confirmado por PD-1; implementado por CHG-3. Evidencia: `docs/openspec/evidencia/sanitize-mode-param/`._
 
 #### Scenario: Intento de inyección vía parámetro (línea base del defecto)
 - **WHEN** (histórico, código pre-CHG-3) se carga `/index.php?mode=%22%3E%3Cscript%3Ealert(1)%3C%2Fscript%3E`
@@ -62,8 +62,8 @@ _Estado: requisito confirmado por PD-1 (2026-11-17); implementado por CHG-3 (whi
 - **THEN** el modo de configuración (`CONFIG.mode`) es `4x4` y la página renderiza 4 categorías × 4 ítems, sin errores de consola
 
 ### Requirement: Confirmación antes de recargar al cambiar de modo
-Al cambiar el modo desde el selector, el sistema SHALL solicitar confirmación al usuario antes de recargar la página; si el usuario la cancela, el selector SHALL volver al modo actual y la página SHALL mantener el modo y el estado actuales sin recargar.
-_Estado: requisito confirmado por IC-1 (2026-11-17); implementado por CHG-6 (confirmación en cliente `confirmModeChange`, ver `design.md`). La línea base del defecto anterior (R5) queda conservada como evidencia en `docs/openspec/evidencia/confirm-before-mode-reload/antes.md` y en la suite de caracterización (CHG-0)._
+Al cambiar el modo desde el selector, el sistema SHALL solicitar confirmación al usuario antes de recargar la página; si la cancela, el selector SHALL volver al modo actual y la página SHALL mantener el modo y el estado actuales sin recargar.
+_Estado: confirmado por IC-1; implementado por CHG-6. Evidencia: `docs/openspec/evidencia/confirm-before-mode-reload/`._
 
 #### Scenario: Línea base del defecto (comportamiento actual)
 - **WHEN** (histórico, código pre-CHG-6) el usuario tiene marcas y textos sin exportar y cambia el modo desde el selector

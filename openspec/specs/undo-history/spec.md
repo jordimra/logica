@@ -34,8 +34,8 @@ _Estado: comportamiento observado. Evidencia: `script.js:145-146`.
 - **THEN** no se restaura ningún estado previo a la importación (historial vacío)
 
 ### Requirement: El atajo Ctrl+Z no interfiere con la edición de textos
-El atajo Ctrl+Z para el tablero SHALL respetar el deshacer nativo del navegador cuando el foco está dentro de un campo de texto editable (input de texto o textarea); cuando el foco está fuera de esos campos, Ctrl+Z (y Cmd+Z en Mac) SHALL deshacer una operación del tablero.
-_Estado: requisito confirmado por PD-3 (2026-11-17); implementado por CHG-5 (el handler de teclado ignora el atajo sobre campos editables de texto, ver `design.md`). Línea base del defecto anterior (H4) conservada en `docs/openspec/evidencia/undo-and-confirm-coherence/antes.md`._
+El atajo Ctrl+Z para el tablero SHALL respetar el deshacer nativo del navegador cuando el foco está en un campo de texto editable (input o textarea); fuera de esos campos, Ctrl+Z (y Cmd+Z en Mac) SHALL deshacer una operación del tablero.
+_Estado: confirmado por PD-3; implementado por CHG-5. Evidencia: `docs/openspec/evidencia/undo-and-confirm-coherence/`._
 
 #### Scenario: Editando un nombre de categoría (defecto observado)
 - **WHEN** (histórico, código pre-CHG-5) el usuario edita el nombre de una categoría y pulsa Ctrl+Z

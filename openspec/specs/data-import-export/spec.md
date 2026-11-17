@@ -30,8 +30,8 @@ _Estado: comportamiento observado y documentado en README. Evidencia: `script.js
 - **THEN** el área de texto se muestra y luego se oculta, y el contenido escrito se conserva entre ambos estados
 
 ### Requirement: Exportación de la plantilla y del progreso
-La exportación a JSON SHALL incluir el estado del tablero (celdas marcadas por zona y posición) además de modo, categorías, ítems y enunciado, de modo que la importación reproduzca plantillas **y progresos**.
-_Estado: requisito confirmado por D2 (2026-11-17); implementado por CHG-2 (esquema v2 aprobado por PD-4, `design.md`). La línea base del defecto anterior (H10) queda conservada como evidencia en `docs/openspec/evidencia/export-progress-json/antes.md` y en la suite de caracterización (CHG-0)._
+La exportación a JSON SHALL incluir el estado del tablero (celdas marcadas por zona y posición) además de modo, categorías, ítems y enunciado, de modo que la importación reproduzca plantillas y progresos.
+_Estado: confirmado por D2; implementado por CHG-2 (esquema v2, PD-4). Evidencia: `docs/openspec/evidencia/export-progress-json/`._
 
 #### Scenario: Línea base del defecto (comportamiento actual)
 - **WHEN** (histórico, código pre-CHG-2) el usuario marca celdas y exporta
