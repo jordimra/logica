@@ -1,5 +1,6 @@
 # Skills y cachés de agentes
 .agents/
+.playwright-mcp/
 
 # Editores y SO
 .vscode/
