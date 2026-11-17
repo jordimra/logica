@@ -17,7 +17,7 @@ rules:
   tasks:
     - Incluir siempre la ejecución de tests de caracterización ANTES y DESPUÉS del cambio, con evidencia del resultado.
   specs:
-    - Escribir escenarios en español usando "CUANDO/ENTONCES" (WHEN/THEN).
+    - Redactar specs y escenarios en español; los pasos de escenario usan los marcadores **WHEN**/**THEN** (obligatorios para el parser de OpenSpec 2.1.0) y el texto de cada requirement incluye SHALL.
 
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.
