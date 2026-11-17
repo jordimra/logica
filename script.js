@@ -1,9 +1,11 @@
 /* script.js */
 
-// --- NUEVO: VARIABLE PARA GESTIONAR EL RETRASO DEL CLICK ---
-
-let clickTimer = null;
+// --- RETRASO DEL CLICK (desambiguación click simple vs doble click) ---
+// Cola de acciones pendientes por celda (CHG-4): un click en una celda distinta NO
+// cancela las acciones pendientes de otras celdas (H3 corregido); un click repetido
+// en la misma celda reemplaza su acción pendiente (último click gana).
 const CLICK_DELAY = 250; // Milisegundos a esperar para confirmar que no es doble click
+const clickQueue = new Map(); // id de celda -> { gr, gc, r, c, timer }
 
 // --- HISTORIAL DE ESTADOS (UNDO) ---
 
@@ -236,28 +238,31 @@ function syncData() {
 }
 
 function toggleCell(gRow, gCol, r, c) {
-    // Si ya había un timer pendiente (clicks muy rápidos), lo limpiamos por seguridad
-    if (clickTimer) clearTimeout(clickTimer);
+    const id = `cell_${gRow}_${gCol}_${r}_${c}`;
 
-    // Iniciamos un temporizador. La acción NO se ejecuta inmediatamente.
-    clickTimer = setTimeout(() => {
-        let id = `cell_${gRow}_${gCol}_${r}_${c}`;
-        let cell = document.getElementById(id);
-        if(!cell) return;
-        
-        // --- AQUÍ EMPIEZA LA ACCIÓN DEL CLICK SIMPLE ---
-        saveHistory(); // Guardamos historia justo antes de aplicar cambios
+    // Clicks rápidos en la MISMA celda: el último reemplaza al pendiente (desambiguación).
+    // Clicks en OTRA celda: no se cancela nada; cada celda drena su propia acción (CHG-4/H3).
+    const pending = clickQueue.get(id);
+    if (pending) clearTimeout(pending.timer);
 
-        let st = 0;
-        if (cell.classList.contains('opt-cross')) st = 1;
-        if (cell.classList.contains('opt-circle')) st = 2;
-        applyState(gRow, gCol, r, c, (st + 1) % 3);
-        runInference(); // Drenar la cola de propagación una vez por acción (CHG-1)
-        
-        // Limpiamos el timer al terminar
-        clickTimer = null;
-        
-    }, CLICK_DELAY);
+    // La acción NO se ejecuta inmediatamente: a los 250 ms (ventana de doble click).
+    clickQueue.set(id, {
+        gr: gRow, gc: gCol, r, c,
+        timer: setTimeout(() => {
+            clickQueue.delete(id);
+            let cell = document.getElementById(id);
+            if (!cell) return;
+
+            // --- AQUÍ EMPIEZA LA ACCIÓN DEL CLICK SIMPLE ---
+            saveHistory(); // Guardamos historia justo antes de aplicar cambios
+
+            let st = 0;
+            if (cell.classList.contains('opt-cross')) st = 1;
+            if (cell.classList.contains('opt-circle')) st = 2;
+            applyState(gRow, gCol, r, c, (st + 1) % 3);
+            runInference(); // Drenar la cola de propagación una vez por acción (CHG-1)
+        }, CLICK_DELAY)
+    });
 }
 // --- PROPAGACIÓN DE INFERENCIA ITERATIVA (CHG-1) ---
 // Cola de celdas recién circuladas pendientes de propagar. Solo se encola una
@@ -414,10 +419,13 @@ function resetCell(gr, gc, r, c) {
 
 function cleanZone(gr, gc) {
     // --- ESTA ES LA CLAVE ---
-    // Si detectamos un doble click, CANCELAMOS inmediatamente el click simple pendiente
-    if (clickTimer) {
-        clearTimeout(clickTimer);
-        clickTimer = null;
+    // Si detectamos un doble click, CANCELAMOS los clicks simples pendientes DE ESTA ZONA
+    // (CHG-4: la cola es por celda; las acciones de otras zonas no se tocan).
+    for (const [id, p] of [...clickQueue]) {
+        if (p.gr === gr && p.gc === gc) {
+            clearTimeout(p.timer);
+            clickQueue.delete(id);
+        }
     }
 
     // Y ejecutamos la lógica de limpieza

@@ -130,7 +130,7 @@ async function runAll(browser) {
     await q.close();
   });
 
-  await test('T2', 'Ciclo de celdas + clicks rápidos (H3)', async (r) => {
+  await test('T2', 'Ciclo de celdas + clicks rápidos (CHG-4: H3 corregido)', async (r) => {
     const { page, close } = await makePage(browser, BASE + '/index.php');
     await clickCell(page, 'cell_0_1_0_1');
     expect(r, '1 click → cruz', await cellState(page, 'cell_0_1_0_1'), 'X');
@@ -141,12 +141,47 @@ async function runAll(browser) {
     await page.evaluate(async () => {
       const s = (ms) => new Promise((r) => setTimeout(r, ms));
       document.getElementById('cell_0_2_0_1').click(); await s(100);
-      document.getElementById('cell_0_3_0_1').click(); await s(450);
+      document.getElementById('cell_0_3_0_1').click(); await s(650);
     });
-    expect(r, 'H3: primer click rápido se pierde', await cellState(page, 'cell_0_2_0_1'), '-');
-    expect(r, 'H3: segundo click se registra', await cellState(page, 'cell_0_3_0_1'), 'X');
-    markDefect(r, 'H3: la acción pendiente del primer click se cancela (línea base)');
+    expect(r, 'H3 corregido: primer click rápido registrado', await cellState(page, 'cell_0_2_0_1'), 'X');
+    expect(r, 'segundo click rápido registrado', await cellState(page, 'cell_0_3_0_1'), 'X');
+    // Nota: línea base anterior (CHG-0, defecto H3): la acción de cell_0_2_0_1 se cancelaba.
+    // Cambio intencional aprobado por el delta de CHG-4 (evidencia: antes.md).
     await close();
+  });
+
+  await test('T2b', 'Doble click: desambiguación y cancelación por zona (aceptación CHG-4)', async (r) => {
+    const p = await makePage(browser, BASE + '/index.php');
+    // (a) Doble click en zona marcada: los cruces se limpian; el círculo permanece
+    // (comportamiento de siempre: la primitiva `force` no modifica círculos).
+    await circleCell(p.page, 'cell_0_1_0_0'); // O + autocruces
+    await p.page.evaluate(() => {
+      document.getElementById('cell_0_1_0_0').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    });
+    await sleep(400);
+    expect(r, 'círculo r0c0 no modificado por la limpieza', await cellState(p.page, 'cell_0_1_0_0'), 'O');
+    for (const id of ['cell_0_1_0_1', 'cell_0_1_0_2', 'cell_0_1_1_0', 'cell_0_1_2_0'])
+      expect(r, 'cruz limpiada ' + id, await cellState(p.page, id), '-');
+    expect(r, 'celdas vacías inalteradas', await cellState(p.page, 'cell_0_1_1_1'), '-');
+    // (b) Círculo con click rápido pendiente + doble click en la misma zona → la acción
+    // pendiente se cancela: si se hubiera ejecutado, el círculo habría ciclado a vacío.
+    await p.page.evaluate(async () => {
+      const s = (ms) => new Promise((res) => setTimeout(res, ms));
+      document.getElementById('cell_0_1_0_0').click(); await s(100);
+      document.getElementById('cell_0_1_0_0').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      await s(500);
+    });
+    expect(r, 'acción pendiente de la zona cancelada (círculo intacto)', await cellState(p.page, 'cell_0_1_0_0'), 'O');
+    // (c) Click rápido en (A,B) + doble click en otra zona (A,C) → la acción de (A,B) se ejecuta
+    await p.page.evaluate(async () => {
+      const s = (ms) => new Promise((res) => setTimeout(res, ms));
+      document.getElementById('cell_0_1_1_1').click(); await s(100);
+      document.getElementById('cell_0_2_0_0').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      await s(500);
+    });
+    expect(r, 'acción de otra zona no cancelada (A,B) r1c1', await cellState(p.page, 'cell_0_1_1_1'), 'X');
+    expect(r, 'zona (A,C) sin cambios tras doble click', await cellState(p.page, 'cell_0_2_0_0'), '-');
+    await p.close();
   });
 
   await test('T3', 'Autocruce al colocar círculo', async (r) => {
