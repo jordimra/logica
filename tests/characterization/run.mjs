@@ -229,6 +229,53 @@ async function runAll(browser) {
     await p2.close();
   });
 
+  await test('T5b', 'Ctrl+Z respeta inputs + confirmaciones de limpieza (aceptación CHG-5)', async (r) => {
+    const p = await makePage(browser, BASE + '/index.php');
+    // H4: con foco en un input de texto, Ctrl+Z = undo nativo (no toca el tablero)
+    await circleCell(p.page, 'cell_0_1_0_0'); // el tablero tiene un undo pendiente
+    await p.page.focus('#cat_0_name');
+    await p.page.fill('#cat_0_name', ''); // vaciar (el campo trae por defecto "A") para hacer el test determinista
+    await p.page.keyboard.type('ZZ');
+    await p.page.keyboard.press('Control+z');
+    await sleep(200);
+    expect(r, 'H4: undo nativo del texto (una Z queda)', await p.page.evaluate(() => document.getElementById('cat_0_name').value), 'Z');
+    expect(r, 'H4: el tablero no se deshace', await cellState(p.page, 'cell_0_1_0_0'), 'O');
+    // H4: fuera de campos de texto, Ctrl+Z sigue deshaciendo el tablero
+    await p.page.evaluate(() => document.activeElement.blur());
+    await p.page.keyboard.press('Control+z');
+    await sleep(100);
+    expect(r, 'H4: Ctrl+Z fuera del input deshace el tablero (cruz)', await cellState(p.page, 'cell_0_1_0_0'), 'X');
+    // H6: doble click en zona con cruces pide confirmación (stub: OK por defecto)
+    await clickCell(p.page, 'cell_0_1_1_1'); // (A,B) r1c1 cruz
+    const c0 = await p.page.evaluate(() => window.__diag.confirms);
+    await p.page.evaluate(() => document.getElementById('cell_0_1_1_1').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
+    await sleep(300);
+    expect(r, 'H6: zona se limpia al confirmar (cruz)', await cellState(p.page, 'cell_0_1_1_1'), '-');
+    expect(r, 'H6: zona: se pidió confirmación', await p.page.evaluate((c) => window.__diag.confirms, c0), c0 + 1);
+    // H6: cancelar la confirmación → la zona no se limpia
+    await clickCell(p.page, 'cell_0_2_1_0'); // (A,C) r1c0 cruz
+    await p.page.evaluate(() => { window.__diag.confirmResults = false; });
+    await p.page.evaluate(() => document.getElementById('cell_0_2_1_0').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
+    await sleep(300);
+    expect(r, 'H6: al cancelar la zona no se limpia', await cellState(p.page, 'cell_0_2_1_0'), 'X');
+    // H6: doble click en etiqueta de ítem (handleCleanLabel) también pide confirmación
+    await clickCell(p.page, 'cell_0_2_1_1'); // (A,C) r1c1 cruz
+    const c1 = await p.page.evaluate(() => window.__diag.confirms);
+    await p.page.evaluate(() => document.getElementById('rh_item_0_1').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
+    await sleep(300);
+    expect(r, 'H6: ítem: se pidió confirmación', await p.page.evaluate((c) => window.__diag.confirms, c1), c1 + 1);
+    expect(r, 'H6: al cancelar el grupo de ítem no se limpia', await cellState(p.page, 'cell_0_2_1_1'), 'X');
+    // Confirmar → el grupo del ítem se limpia (resetCell quita cruces)
+    await p.page.evaluate(() => { window.__diag.confirmResults = true; });
+    await p.page.evaluate(() => document.getElementById('rh_item_0_1').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
+    await sleep(300);
+    expect(r, 'H6: al confirmar el grupo del ítem se limpia', await cellState(p.page, 'cell_0_2_1_1'), '-');
+    // Nota: línea base anterior (CHG-4, defectos H4/H6): Ctrl+Z robaba el undo a los inputs
+    // y doble click en zona/ítem limpiaba sin confirmación.
+    // Cambio intencional aprobado por el delta de CHG-5 (evidencia: antes.md).
+    await p.close();
+  });
+
   await test('T6', 'Import JSON mismo modo', async (r) => {
     const p = await makePage(browser, BASE + '/index.php');
     await p.page.setInputFiles('#importFile', FIX('import-3x4.json'));

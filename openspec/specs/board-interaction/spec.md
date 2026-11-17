@@ -43,20 +43,28 @@ _Estado: cambio intencional — en la línea base (defecto H3) la acción de X s
 - **THEN** la acción pendiente de Z1 se ejecuta igualmente (la cancelación del doble click solo afecta a su propia zona)
 
 ### Requirement: Limpieza de una zona con doble click
-Un doble click sobre una zona del tablero SHALL vaciar las celdas con cruz de esa zona y cancelar cualquier click simple pendiente sobre ella. Los círculos existentes de la zona NO se modifican por la limpieza (la primitiva de limpieza `force` no toca celdas con círculo — comportamiento observado y conservado).
-_Estado: corrección de precisión sobre el requisito previo (Fase 3), que describía "vaciar todas las celdas" — en la implementación la limpieza no modifica círculos (evidencia: `force` en `script.js`, verificada en ejecución por T2b, 2026-11-17). Sin cambio de código en CHG-4; se documenta el comportamiento real observado._
+Un doble click sobre una zona del tablero SHALL solicitar confirmación antes de vaciar las celdas con cruz de esa zona y cancelar cualquier click simple pendiente sobre ella. Los círculos existentes de la zona NO se modifican por la limpieza (la primitiva de limpieza no toca celdas con círculo — comportamiento observado y conservado). Si el usuario cancela, la zona no se modifica.
+_Estado: corrección CHG-5 (PD-3: confirmaciones coherentes; ver `design.md`). La línea base anterior (doble click sin confirmación) queda conservada en `docs/openspec/evidencia/undo-and-confirm-coherence/antes.md`._
 
 #### Scenario: Doble click en una zona
-- **WHEN** el usuario hace doble click sobre la zona (A,B) que contiene un círculo en r0c0 y cruces por autocruce
-- **THEN** los cruces de la zona quedan vacíos, el círculo r0c0 permanece, los resultados se recalculan y cualquier click simple pendiente de esa zona se cancela
+- **WHEN** el usuario hace doble click sobre la zona (A,B) que contiene cruces y confirma la limpieza
+- **THEN** los cruces de la zona quedan vacíos, el círculo r0c0 (si existiera) permanece, los resultados se recalculan y cualquier click simple pendiente de esa zona se cancela
+
+#### Scenario: Cancelar la limpieza de zona
+- **WHEN** el usuario hace doble click sobre una zona con marcas y responde No a la confirmación
+- **THEN** la zona permanece exactamente como estaba (sin limpieza ni cambios)
 
 ### Requirement: Limpieza de un grupo de categoría con doble click en su etiqueta
-Un doble click sobre la etiqueta de una categoría (fila o columna) SHALL vaciar las celdas correspondientes a ese ítem en todas las zonas donde la categoría participa (como fila o como columna).
-_Estado: comportamiento observado. Evidencia: `script.js:339-356` (sin diálogo de confirmación; PD-3 sobre la inconsistencia con `cleanCategory`, H6).
+Un doble click sobre la etiqueta de un ítem de una categoría (fila o columna) SHALL solicitar confirmación antes de vaciar las celdas correspondientes a ese ítem en todas las zonas donde la categoría participa (como fila o como columna). Si el usuario cancela, el tablero no se modifica.
+_Estado: corrección CHG-5 (PD-3: confirmaciones coherentes; la línea base "sin diálogo de confirmación" queda conservada en `docs/openspec/evidencia/undo-and-confirm-coherence/antes.md`)._
 
 #### Scenario: Doble click en la etiqueta de B (ítem 1)
-- **WHEN** el usuario hace doble click sobre la etiqueta del ítem 1 de la categoría B
+- **WHEN** el usuario hace doble click sobre la etiqueta del ítem 1 de la categoría B y confirma la limpieza
 - **THEN** se vacían las celdas de la fila/columna del ítem 1 en las zonas (A,B) y (B,C)… (todas las zonas que contienen B)
+
+#### Scenario: Cancelar la limpieza de grupo de ítem
+- **WHEN** el usuario hace doble click sobre la etiqueta de un ítem y responde No a la confirmación
+- **THEN** el tablero no cambia (las celdas de ese ítem permanecen)
 
 ### Requirement: Limpieza completa del tablero con confirmación
 El botón "Limpiar Tablero" SHALL solicitar confirmación antes de vaciar todas las celdas del tablero y guardar el estado anterior en el historial.
@@ -65,3 +73,11 @@ _Estado: comportamiento observado. Evidencia: `script.js:322-330`.
 #### Scenario: Cancelar la limpieza
 - **WHEN** el usuario pulsa "Limpiar Tablero" y responde No a la confirmación
 - **THEN** el tablero no cambia y no se añade un estado al historial
+
+### Requirement: Limpieza de un grupo completo de categoría con doble click en su cabecera
+Un doble click sobre la cabecera de una categoría (etiqueta de fila o columna de la categoría) SHALL solicitar confirmación; al confirmarse, el sistema SHALL vaciar todas las celdas de todos los ítems de esa categoría en las zonas donde participa. Si el usuario cancela, el tablero no se modifica.
+_Estado: comportamiento observado documentado por CHG-5 (`cleanCategory` existía antes sin estar especificada; sin cambio de código). Caracterización: T5b._
+
+#### Scenario: Doble click en la cabecera de B
+- **WHEN** el usuario hace doble click sobre la cabecera de la categoría B y confirma
+- **THEN** se vacían las celdas de todos los ítems de B en las zonas donde B participa y el estado previo queda en el historial (deshacible con Ctrl+Z)

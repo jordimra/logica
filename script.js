@@ -61,8 +61,22 @@ function undo() {
 
 // --- Escuchar teclado para CTRL+Z ---
 
+// CHG-5/H4: si el foco está en un campo de texto editable, no se intercepta el
+// atajo: el navegador ejecuta su undo nativo sobre el texto.
+function isTextEditable(el) {
+    if (!el) return false;
+    if (el.isContentEditable) return true;
+    if (el.tagName === 'TEXTAREA') return true;
+    if (el.tagName === 'INPUT') {
+        const t = (el.type || 'text').toLowerCase();
+        return !['checkbox', 'radio', 'range', 'color', 'file', 'button', 'submit', 'reset', 'image'].includes(t);
+    }
+    return false;
+}
+
 document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        if (isTextEditable(document.activeElement)) return; // H4/CHG-5: undo nativo del texto
         e.preventDefault();
         undo();
     }
@@ -395,6 +409,7 @@ function cleanCategory(idx) {
 
 function handleCleanLabel(idx, itemIdx) {
     // Esta es la que llama el HTML
+    if (!confirm("¿Limpiar ítem?")) return; // CHG-5/H6: confirmación coherente con el resto de limpiezas
     saveHistory();
     cleanLabel(idx, itemIdx);
 }
@@ -427,6 +442,7 @@ function cleanZone(gr, gc) {
             clickQueue.delete(id);
         }
     }
+    if (!confirm("¿Limpiar zona?")) return; // CHG-5/H6: confirmación coherente con el resto de limpiezas
 
     // Y ejecutamos la lógica de limpieza
     saveHistory(); // Guardamos historia
